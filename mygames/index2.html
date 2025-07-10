@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pixel Raiders - XMind Space</title>
+  <!-- Tailwind CSS CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <!-- Phaser.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.70.0/phaser.min.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+    
+    body {
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f3460 100%);
+      font-family: 'Orbitron', monospace;
+      overflow-x: hidden;
+    }
+
+    canvas {
+      display: block;
+      margin: auto;
+      border: 3px solid #00ff88;
+      border-radius: 15px;
+      box-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
+    }
+
+    .hud {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 100;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 15px;
+      border-radius: 10px;
+      border: 2px solid #00ff88;
+      min-width: 200px;
+    }
+
+    .controls {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      z-index: 100;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 15px;
+      border-radius: 10px;
+      border: 2px solid #00ff88;
+      font-size: 12px;
+    }
+
+    .game-over {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 200;
+      background: rgba(0, 0, 0, 0.95);
+      padding: 30px;
+      border-radius: 20px;
+      border: 3px solid #ff0088;
+      text-align: center;
+      display: none;
+    }
+
+    .level-complete {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 200;
+      background: rgba(0, 0, 0, 0.95);
+      padding: 30px;
+      border-radius: 20px;
+      border: 3px solid #00ff88;
+      text-align: center;
+      display: none;
+    }
+
+    .victory {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 200;
+      background: rgba(0, 0, 0, 0.95);
+      padding: 30px;
+      border-radius: 20px;
+      border: 3px solid #ffaa00;
+      text-align: center;
+      display: none;
+    }
+
+    .glow {
+      text-shadow: 0 0 10px currentColor;
+    }
+
+    .pulse {
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 10px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 5px;
+      overflow: hidden;
+      margin-top: 5px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #00ff88, #00aa55);
+      transition: width 0.3s ease;
+    }
+  </style>
+</head>
+
+<body class="text-white font-sans text-center relative">
+
+  <!-- Header -->
+  <header class="p-6 bg-black bg-opacity-80 shadow-lg mb-4 border-b-2 border-green-400">
+    <h1 class="text-5xl font-black text-green-400 glow">🎮 PIXEL RAIDERS</h1>
+    <p class="text-gray-300 mt-2">Epic space adventure awaits! Survive 6 levels of alien invasion!</p>
+  </header>
+
+  <!-- HUD -->
+  <div class="hud">
+    <div class="text-green-400 font-bold mb-2">⚡ PLAYER STATUS</div>
+    <div class="text-white">Health: <span id="health" class="text-red-400 font-bold">100</span></div>
+    <div class="text-white">Score: <span id="score" class="text-yellow-400 font-bold">0</span></div>
+    <div class="text-white">Level: <span id="level" class="text-blue-400 font-bold">1</span>/6</div>
+    <div class="text-white">Progress:</div>
+    <div class="progress-bar">
+      <div id="progressBar" class="progress-fill" style="width: 0%"></div>
+    </div>
+    <div class="text-white mt-2">Weapon: <span id="weapon" class="text-purple-400 font-bold">Laser</span></div>
+    <div class="text-white">Enemies: <span id="enemyCount" class="text-orange-400 font-bold">0</span></div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <div class="text-green-400 font-bold mb-2">🎮 CONTROLS</div>
+    <div class="text-white">WASD / Arrow Keys: Move</div>
+    <div class="text-white">SPACE: Shoot</div>
+    <div class="text-white">SHIFT: Shield</div>
+    <div class="text-white">E: Use Power-up</div>
+  </div>
+
+  <!-- Game Container -->
+  <div id="gameContainer" class="flex justify-center items-center h-[70vh] relative">
+    <!-- Phaser will insert canvas here -->
+  </div>
+
+  <!-- Game Over Screen -->
+  <div id="gameOver" class="game-over">
+    <h2 class="text-4xl font-bold text-red-400 mb-4">GAME OVER</h2>
+    <p class="text-white mb-4">Your final score: <span id="finalScore" class="text-yellow-400 font-bold">0</span></p>
+    <p class="text-white mb-4">Level reached: <span id="finalLevel" class="text-blue-400 font-bold">1</span></p>
+    <button onclick="restartGame()" class="bg-red-600 px-6 py-3 rounded-full hover:bg-red-700 transition text-white font-bold mr-4">
+      🔄 Try Again
+    </button>
+    <a href="../index.html" class="bg-gray-600 px-6 py-3 rounded-full hover:bg-gray-700 transition text-white font-bold">
+      🏠 Home
+    </a>
+  </div>
+
+  <!-- Level Complete Screen -->
+  <div id="levelComplete" class="level-complete">
+    <h2 class="text-4xl font-bold text-green-400 mb-4">LEVEL <span id="completedLevel">1</span> COMPLETE!</h2>
+    <p class="text-white mb-2">Level Score: <span id="levelScore" class="text-yellow-400 font-bold">0</span></p>
+    <p class="text-white mb-4">Bonus: <span id="bonusScore" class="text-green-400 font-bold">0</span></p>
+    <p class="text-white mb-4">Total Score: <span id="totalScore" class="text-yellow-400 font-bold">0</span></p>
+    <button onclick="nextLevel()" class="bg-green-600 px-6 py-3 rounded-full hover:bg-green-700 transition text-white font-bold pulse">
+      ➡️ Next Level
+    </button>
+  </div>
+
+  <!-- Victory Screen -->
+  <div id="victoryScreen" class="victory">
+    <h2 class="text-5xl font-bold text-yellow-400 mb-4 glow">🏆 VICTORY!</h2>
+    <p class="text-white mb-2 text-xl">You have conquered all 6 levels!</p>
+    <p class="text-white mb-4">Final Score: <span id="victoryScore" class="text-yellow-400 font-bold text-2xl">0</span></p>
+    <div class="mb-4">
+      <span id="rankText" class="text-2xl font-bold"></span>
+    </div>
+    <button onclick="restartGame()" class="bg-yellow-600 px-8 py-4 rounded-full hover:bg-yellow-700 transition text-white font-bold mr-4">
+      🔄 Play Again
+    </button>
+    <a href="../index.html" class="bg-gray-600 px-6 py-3 rounded-full hover:bg-gray-700 transition text-white font-bold">
+      🏠 Home
+    </a>
+  </div>
+
+  <!-- Back to Home Button -->
+  <div class="mt-8">
+    <a href="../index.html" class="bg-indigo-600 px-6 py-3 rounded-full hover:bg-indigo-700 transition text-white font-semibold border-2 border-indigo-400">
+      ⬅️ Back to Home
+    </a>
+  </div>
+
+  <!-- Phaser Game Script -->
+  <script>
+    // Game variables
+    let gameData = {
+      score: 0,
+      health: 100,
+      level: 1,
+      maxLevel: 6,
+      weapon: 'Laser',
+      powerUpActive: false,
+      shield: false,
+      enemies: [],
+      bullets: [],
+      powerUps: [],
+      particles: null,
+      explosions: null,
+      gameScene: null,
+      levelCompleting: false,
+      gameRunning: true,
+      enemiesKilled: 0,
+      levelStartScore: 0
+    };
+
+    const config = {
+      type: Phaser.AUTO,
+      width: 900,
+      height: 600,
+      backgroundColor: '#000011',
+      parent: 'gameContainer',
+      physics: {
+        default: 'arcade',
+        arcade: {
+          gravity: { y: 0 },
+          debug: false
+        }
+      },
+      scene: {
+        preload: preload,
+        create: create,
+        update: update
+      }
+    };
+
+    let player, enemies, bullets, powerUps, cursors, spaceKey, shiftKey, eKey;
+    let stars, explosions, powerUpEffects;
+    let enemySpawnTimer = 0;
+    let powerUpSpawnTimer = 0;
+    let weaponFireRate = 250;
+    let lastFired = 0;
+
+    const game = new Phaser.Game(config);
+
+    function preload() {
+      // Create simple colored rectangles as sprites
+      this.add.graphics()
+        .fillStyle(0x00ff88)
+        .fillRect(0, 0, 32, 32)
+        .generateTexture('player', 32, 32);
+
+      this.add.graphics()
+        .fillStyle(0xff0044)
+        .fillRect(0, 0, 24, 24)
+        .generateTexture('enemy', 24, 24);
+
+      this.add.graphics()
+        .fillStyle(0x44ff00)
+        .fillRect(0, 0, 8, 16)
+        .generateTexture('bullet', 8, 16);
+
+      this.add.graphics()
+        .fillStyle(0xffaa00)
+        .fillRect(0, 0, 20, 20)
+        .generateTexture('powerup', 20, 20);
+
+      this.add.graphics()
+        .fillStyle(0xffffff)
+        .fillRect(0, 0, 2, 2)
+        .generateTexture('star', 2, 2);
+
+      this.add.graphics()
+        .fillStyle(0xff4400)
+        .fillCircle(16, 16, 16)
+        .generateTexture('explosion', 32, 32);
+    }
+
+    function create() {
+      gameData.gameScene = this;
+
+      // Create starfield background
+      stars = this.add.group();
+      for (let i = 0; i < 100; i++) {
+        let star = this.add.image(
+          Phaser.Math.Between(0, 900),
+          Phaser.Math.Between(0, 600),
+          'star'
+        );
+        star.alpha = Phaser.Math.FloatBetween(0.3, 1);
+        stars.add(star);
+      }
+
+      // Create player
+      player = this.physics.add.sprite(450, 500, 'player');
+      player.setCollideWorldBounds(true);
+      player.setTint(0x00ffaa);
+
+      // Create groups
+      enemies = this.physics.add.group();
+      bullets = this.physics.add.group();
+      powerUps = this.physics.add.group();
+      explosions = this.add.group();
+      powerUpEffects = this.add.group();
+
+      // Input setup
+      cursors = this.input.keyboard.createCursorKeys();
+      spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+      shiftKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
+      eKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
+
+      // WASD keys
+      const wasd = this.input.keyboard.addKeys('W,S,A,D');
+      cursors = { ...cursors, ...wasd };
+
+      // Collisions
+      this.physics.add.overlap(bullets, enemies, hitEnemy, null, this);
+      this.physics.add.overlap(player, enemies, hitPlayer, null, this);
+      this.physics.add.overlap(player, powerUps, collectPowerUp, null, this);
+
+      // Start background music (simulated)
+      playBackgroundMusic();
+    }
+
+    function update(time, delta) {
+      if (!gameData.gameRunning) return;
+
+      // Animate stars
+      stars.children.entries.forEach(star => {
+        star.y += 2;
+        if (star.y > 600) {
+          star.y = 0;
+          star.x = Phaser.Math.Between(0, 900);
+        }
+      });
+
+      // Player movement
+      player.setVelocity(0);
+      
+      if (cursors.left.isDown || cursors.A.isDown) {
+        player.setVelocityX(-300);
+        player.angle = -10;
+      } else if (cursors.right.isDown || cursors.D.isDown) {
+        player.setVelocityX(300);
+        player.angle = 10;
+      } else {
+        player.angle = 0;
+      }
+
+      if (cursors.up.isDown || cursors.W.isDown) {
+        player.setVelocityY(-300);
+      } else if (cursors.down.isDown || cursors.S.isDown) {
+        player.setVelocityY(300);
+      }
+
+      // Shooting
+      if (spaceKey.isDown && time > lastFired) {
+        shootBullet();
+        lastFired = time + weaponFireRate;
+      }
+
+      // Shield
+      if (shiftKey.isDown) {
+        activateShield();
+      }
+
+      // Power-up activation
+      if (Phaser.Input.Keyboard.JustDown(eKey)) {
+        activatePowerUp();
+      }
+
+      // Spawn enemies
+      enemySpawnTimer += delta;
+      const spawnRate = Math.max(500, 1500 - (gameData.level * 150));
+      if (enemySpawnTimer > spawnRate) {
+        spawnEnemy();
+        enemySpawnTimer = 0;
+      }
+
+      // Spawn power-ups
+      powerUpSpawnTimer += delta;
+      if (powerUpSpawnTimer > Math.max(5000, 10000 - (gameData.level * 500))) {
+        spawnPowerUp();
+        powerUpSpawnTimer = 0;
+      }
+
+      // Move bullets
+      bullets.children.entries.forEach(bullet => {
+        if (bullet.y < 0) {
+          bullet.destroy();
+        }
+      });
+
+      // Move enemies with AI
+      enemies.children.entries.forEach(enemy => {
+        if (enemy.y > 600) {
+          enemy.destroy();
+          return;
+        }
+
+        // Simple AI - move toward player
+        const dx = player.x - enemy.x;
+        const speed = 80 + (gameData.level * 25);
+        
+        if (Math.abs(dx) > 10) {
+          enemy.setVelocityX(dx > 0 ? speed * 0.4 : -speed * 0.4);
+        }
+        
+        enemy.setVelocityY(speed);
+        
+        // Enemy color based on health
+        const health = enemy.getData('health') || 1;
+        if (health > 3) {
+          enemy.setTint(0x8800ff); // Purple for boss enemies
+        } else if (health > 2) {
+          enemy.setTint(0xff0000); // Red for strong enemies
+        } else if (health > 1) {
+          enemy.setTint(0xff8800); // Orange for medium enemies
+        }
+      });
+
+      // Update power-up effects
+      powerUpEffects.children.entries.forEach(effect => {
+        effect.alpha -= 0.02;
+        effect.scaleX += 0.02;
+        effect.scaleY += 0.02;
+        if (effect.alpha <= 0) {
+          effect.destroy();
+        }
+      });
+
+      // Check level completion based on score and enemies killed
+      const scoreThreshold = gameData.level * 1500;
+      const enemyThreshold = gameData.level * 15;
+      
+      if ((gameData.score - gameData.levelStartScore >= scoreThreshold || gameData.enemiesKilled >= enemyThreshold) && !gameData.levelCompleting) {
+        completeLevel();
+      }
+
+      updateHUD();
+    }
+
+    function shootBullet() {
+      const bullet = bullets.create(player.x, player.y - 20, 'bullet');
+      bullet.setVelocityY(-500);
+      bullet.setTint(0x00ff88);
+
+      // Multi-shot for higher levels
+      if (gameData.level > 2) {
+        const bullet2 = bullets.create(player.x - 15, player.y - 20, 'bullet');
+        bullet2.setVelocityY(-500);
+        bullet2.setTint(0x00ff88);
+        
+        const bullet3 = bullets.create(player.x + 15, player.y - 20, 'bullet');
+        bullet3.setVelocityY(-500);
+        bullet3.setTint(0x00ff88);
+      }
+
+      // Power-up enhanced shooting
+      if (gameData.powerUpActive) {
+        const spreadBullet1 = bullets.create(player.x - 20, player.y - 20, 'bullet');
+        spreadBullet1.setVelocity(-100, -500);
+        spreadBullet1.setTint(0xff00ff);
+        
+        const spreadBullet2 = bullets.create(player.x + 20, player.y - 20, 'bullet');
+        spreadBullet2.setVelocity(100, -500);
+        spreadBullet2.setTint(0xff00ff);
+      }
+
+      playSound('shoot');
+    }
+
+    function spawnEnemy() {
+      const x = Phaser.Math.Between(50, 850);
+      const enemy = enemies.create(x, -30, 'enemy');
+      
+      // Set enemy properties based on level
+      let health = Math.min(gameData.level, 4);
+      
+      // Boss enemy occasionally at higher levels
+      if (gameData.level > 3 && Phaser.Math.Between(1, 15) === 1) {
+        health = 6 + gameData.level;
+        enemy.setScale(2.5);
+        enemy.setTint(0x8800ff);
+      } else {
+        enemy.setScale(1 + (health - 1) * 0.15);
+      }
+      
+      enemy.setData('health', health);
+    }
+
+    function spawnPowerUp() {
+      const x = Phaser.Math.Between(50, 850);
+      const powerUp = powerUps.create(x, -30, 'powerup');
+      powerUp.setVelocityY(120);
+      
+      // Different power-up types
+      const type = Phaser.Math.Between(1, 5);
+      powerUp.setData('type', type);
+      
+      switch(type) {
+        case 1: powerUp.setTint(0xff0000); break; // Health
+        case 2: powerUp.setTint(0x00ff00); break; // Speed boost
+        case 3: powerUp.setTint(0x0000ff); break; // Multi-shot
+        case 4: powerUp.setTint(0xffff00); break; // Shield
+        case 5: powerUp.setTint(0xff00ff); break; // Score multiplier
+      }
+    }
+
+    function hitEnemy(bullet, enemy) {
+      // Create explosion
+      createExplosion(enemy.x, enemy.y);
+      
+      const health = enemy.getData('health') - 1;
+      enemy.setData('health', health);
+      
+      if (health <= 0) {
+        enemy.destroy();
+        const points = 100 * gameData.level;
+        gameData.score += points;
+        gameData.enemiesKilled++;
+        playSound('enemyDestroy');
+      } else {
+        enemy.setTint(0xff4444);
+        playSound('enemyHit');
+      }
+      
+      bullet.destroy();
+      updateHUD();
+    }
+
+    function hitPlayer(player, enemy) {
+      if (!gameData.shield) {
+        gameData.health -= 15;
+        createExplosion(player.x, player.y, 0x00ff88);
+        playSound('playerHit');
+        
+        // Screen shake
+        gameData.gameScene.cameras.main.shake(200, 0.02);
+        
+        if (gameData.health <= 0) {
+          gameOver();
+        }
+      }
+      
+      enemy.destroy();
+      updateHUD();
+    }
+
+    function collectPowerUp(player, powerUp) {
+      const type = powerUp.getData('type');
+      
+      createPowerUpEffect(powerUp.x, powerUp.y);
+      playSound('powerUp');
+      
+      switch(type) {
+        case 1: // Health
+          gameData.health = Math.min(100, gameData.health + 30);
+          break;
+        case 2: // Speed boost
+          weaponFireRate = 120;
+          setTimeout(() => weaponFireRate = 250, 7000);
+          break;
+        case 3: // Multi-shot
+          gameData.powerUpActive = true;
+          setTimeout(() => gameData.powerUpActive = false, 10000);
+          break;
+        case 4: // Shield
+          gameData.shield = true;
+          player.setTint(0x0088ff);
+          setTimeout(() => {
+            gameData.shield = false;
+            player.setTint(0x00ffaa);
+          }, 4000);
+          break;
+        case 5: // Score multiplier
+          gameData.score += 500 * gameData.level;
+          break;
+      }
+      
+      powerUp.destroy();
+      updateHUD();
+    }
+
+    function activateShield() {
+      if (!gameData.shield) {
+        gameData.shield = true;
+        player.setTint(0x0088ff);
+        setTimeout(() => {
+          gameData.shield = false;
+          player.setTint(0x00ffaa);
+        }, 1500);
+      }
+    }
+
+    function activatePowerUp() {
+      if (!gameData.powerUpActive) {
+        gameData.powerUpActive = true;
+        setTimeout(() => gameData.powerUpActive = false, 4000);
+      }
+    }
+
+    function createExplosion(x, y, color = 0xff4400) {
+      const explosion = explosions.create(x, y, 'explosion');
+      explosion.setTint(color);
+      explosion.setScale(0.1);
+      
+      gameData.gameScene.tweens.add({
+        targets: explosion,
+        scaleX: 2,
+        scaleY: 2,
+        alpha: 0,
+        duration: 300,
+        onComplete: () => explosion.destroy()
+      });
+    }
+
+    function createPowerUpEffect(x, y) {
+      const effect = powerUpEffects.create(x, y, 'powerup');
+      effect.setTint(0xffff00);
+      effect.setScale(0.5);
+    }
+
+    function completeLevel() {
+      if (gameData.levelCompleting || !gameData.gameRunning) return;
+      
+      gameData.levelCompleting = true;
+      gameData.gameRunning = false;
+      
+      const levelScore = gameData.score - gameData.levelStartScore;
+      const bonus = gameData.level * 300 + (gameData.health * 10);
+      gameData.score += bonus;
+      
+      document.getElementById('completedLevel').textContent = gameData.level;
+      document.getElementById('levelScore').textContent = levelScore;
+      document.getElementById('bonusScore').textContent = bonus;
+      document.getElementById('totalScore').textContent = gameData.score;
+      document.getElementById('levelComplete').style.display = 'block';
+      
+      gameData.gameScene.scene.pause();
+      playSound('levelComplete');
+      
+      // Check if game is complete
+      if (gameData.level >= gameData.maxLevel) {
+        setTimeout(() => {
+          document.getElementById('levelComplete').style.display = 'none';
+          showVictory();
+        }, 3000);
+      }
+    }
+
+    function nextLevel() {
+      if (gameData.level >= gameData.maxLevel) {
+        showVictory();
+        return;
+      }
+      
+      document.getElementById('levelComplete').style.display = 'none';
+      gameData.levelCompleting = false;
+      gameData.gameRunning = true;
+      gameData.level++;
+      gameData.levelStartScore = gameData.score;
+      gameData.enemiesKilled = 0;
+      
+      // Restore some health for next level
+      gameData.health = Math.min(100, gameData.health + 25);
+      
+      gameData.gameScene.scene.resume();
+      
+      // Clear enemies and power-ups
+      enemies.clear(true, true);
+      powerUps.clear(true, true);
+      bullets.clear(true, true);
+      
+      // Reset spawn timers for new level
+      enemySpawnTimer = 0;
+      powerUpSpawnTimer = 0;
+      
+      updateHUD();
+    }
+
+    function showVictory() {
+      gameData.gameRunning = false;
+      document.getElementById('levelComplete').style.display = 'none';
+      document.getElementById('victoryScore').textContent = gameData.score;
+      
+      // Determine rank based on score
+      let rank = '';
+      let rankColor = '';
+      if (gameData.score >= 50000) {
+        rank = '🌟 LEGENDARY COMMANDER 🌟';
+        rankColor = 'text-yellow-400';
+      } else if (gameData.score >= 30000) {
+        rank = '⭐ ELITE PILOT ⭐';
+        rankColor = 'text-blue-400';
+      } else if (gameData.score >= 20000) {
+        rank = '🎖️ ACE FIGHTER 🎖️';
+        rankColor = 'text-green-400';
+      } else if (gameData.score >= 10000) {
+        rank = '🏅 SKILLED WARRIOR 🏅';
+        rankColor = 'text-purple-400';
+      } else {
+        rank = '🛡️ BRAVE DEFENDER 🛡️';
+        rankColor = 'text-gray-400';
+      }
+      
+      const rankElement = document.getElementById('rankText');
+      rankElement.textContent = rank;
+      rankElement.className = `text-2xl font-bold ${rankColor} glow`;
+      
+      document.getElementById('victoryScreen').style.display = 'block';
+      gameData.gameScene.scene.pause();
+      playSound('levelComplete');
+    }
+
+    function gameOver() {
+      gameData.gameRunning = false;
+      document.getElementById('finalScore').textContent = gameData.score;
+      document.getElementById('finalLevel').textContent = gameData.level;
+      document.getElementById('gameOver').style.display = 'block';
+      gameData.gameScene.scene.pause();
+      playSound('gameOver');
+    }
+
+    function restartGame() {
+      document.getElementById('gameOver').style.display = 'none';
+      document.getElementById('victoryScreen').style.display = 'none';
+      
+      // Reset game data
+      gameData.score = 0;
+      gameData.health = 100;
+      gameData.level = 1;
+      gameData.powerUpActive = false;
+      gameData.shield = false;
+      gameData.levelCompleting = false;
+      gameData.gameRunning = true;
+      gameData.enemiesKilled = 0;
+      gameData.levelStartScore = 0;
+      
+      // Reset timers
+      enemySpawnTimer = 0;
+      powerUpSpawnTimer = 0;
+      weaponFireRate = 250;
+      
+      // Clear all game objects
+      enemies.clear(true, true);
+      bullets.clear(true, true);
+      powerUps.clear(true, true);
+      explosions.clear(true, true);
+      
+      // Reset player
+      player.setPosition(450, 500);
+      player.setTint(0x00ffaa);
+      
+      gameData.gameScene.scene.resume();
+      updateHUD();
+    }
+
+    function updateHUD() {
+      document.getElementById('health').textContent = gameData.health;
+      document.getElementById('score').textContent = gameData.score;
+      document.getElementById('level').textContent = gameData.level;
+      document.getElementById('weapon').textContent = gameData.powerUpActive ? 'SUPER LASER' : 'Laser';
+      document.getElementById('enemyCount').textContent = enemies.children.entries.length;
+      
+      // Update progress bar
+      const scoreThreshold = gameData.level * 1500;
+      const enemyThreshold = gameData.level * 15;
+      const scoreProgress = Math.min(100, ((gameData.score - gameData.levelStartScore) / scoreThreshold) * 100);
+      const enemyProgress = Math.min(100, (gameData.enemiesKilled / enemyThreshold) * 100);
+      const overallProgress = Math.max(scoreProgress, enemyProgress);
+      
+      document.getElementById('progressBar').style.width = overallProgress + '%';
+    }
+
+    function playSound(type) {
+      try {
+        // Create simple sound effects using Web Audio API
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        let frequency, duration, type2;
+        switch(type) {
+          case 'shoot':
+            frequency = 800;
+            duration = 0.1;
+            type2 = 'square';
+            break;
+          case 'enemyHit':
+            frequency = 300;
+            duration = 0.2;
+            type2 = 'sawtooth';
+            break;
+          case 'enemyDestroy':
+            frequency = 150;
+            duration = 0.3;
+            type2 = 'triangle';
+            break;
+          case 'playerHit':
+            frequency = 100;
+            duration = 0.5;
+            type2 = 'sawtooth';
+            break;
+          case 'powerUp':
+            frequency = 1200;
+            duration = 0.3;
+            type2 = 'sine';
+            break;
+          case 'levelComplete':
+            frequency = 600;
+            duration = 1;
+            type2 = 'sine';
+            break;
+          case 'gameOver':
+            frequency = 80;
+            duration = 2;
+            type2 = 'sawtooth';
+            break;
+        }
+        
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.type = type2;
+        oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+        
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + duration);
+      } catch (error) {
+        // Silently handle audio errors
+        console.log('Audio not supported');
+      }
+    }
+
+    function playBackgroundMusic() {
+      // Simple background ambience with space sounds
+      setInterval(() => {
+        if (Math.random() < 0.05 && gameData.gameRunning) {
+          const sounds = ['enemyHit', 'shoot'];
+          playSound(sounds[Math.floor(Math.random() * sounds.length)]);
+        }
+      }, 2000);
+    }
+
+    // Initialize HUD
+    updateHUD();
+  </script>
+</body>
+
+</html>

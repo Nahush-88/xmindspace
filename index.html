@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XMind Space - Play Cool Games</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+    
+    * {
+      font-family: 'Inter', sans-serif;
+    }
+    
+    body {
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%);
+      background-attachment: fixed;
+      overflow-x: hidden;
+    }
+    
+    .gradient-text {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .glow-hover:hover {
+      box-shadow: 0 0 30px rgba(102, 126, 234, 0.3);
+    }
+    
+    .floating {
+      animation: float 6s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-20px); }
+    }
+    
+    .pulse-glow {
+      animation: pulse-glow 2s infinite;
+    }
+    
+    @keyframes pulse-glow {
+      0%, 100% {
+        box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
+      }
+      50% {
+        box-shadow: 0 0 40px rgba(102, 126, 234, 0.8);
+      }
+    }
+    
+    .game-card {
+      background: linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+      backdrop-filter: blur(15px);
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .game-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      transition: left 0.8s;
+    }
+    
+    .game-card:hover::before {
+      left: 100%;
+    }
+    
+    .game-card:hover {
+      transform: translateY(-10px) scale(1.02);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+    
+    .hero-bg {
+      background: radial-gradient(circle at 50% 50%, rgba(102, 126, 234, 0.1) 0%, transparent 50%);
+    }
+    
+    .section-divider {
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #667eea, #764ba2, transparent);
+      margin: 2rem 0;
+    }
+    
+    .nav-link {
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #667eea, #764ba2);
+      transition: width 0.3s ease;
+    }
+    
+    .nav-link:hover::after {
+      width: 100%;
+    }
+    
+    .cta-button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .cta-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.6s;
+    }
+    
+    .cta-button:hover::before {
+      left: 100%;
+    }
+    
+    .parallax-stars {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: -1;
+    }
+    
+    .star {
+      position: absolute;
+      background: white;
+      border-radius: 50%;
+      animation: twinkle 3s infinite;
+    }
+    
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+  </style>
+</head>
+
+<body class="text-white">
+  <!-- Parallax Stars Background -->
+  <div class="parallax-stars">
+    <div class="star" style="width: 2px; height: 2px; top: 20%; left: 10%; animation-delay: 0s;"></div>
+    <div class="star" style="width: 1px; height: 1px; top: 40%; left: 70%; animation-delay: 1s;"></div>
+    <div class="star" style="width: 3px; height: 3px; top: 60%; left: 30%; animation-delay: 2s;"></div>
+    <div class="star" style="width: 2px; height: 2px; top: 80%; left: 80%; animation-delay: 0.5s;"></div>
+    <div class="star" style="width: 1px; height: 1px; top: 15%; left: 60%; animation-delay: 1.5s;"></div>
+    <div class="star" style="width: 2px; height: 2px; top: 70%; left: 15%; animation-delay: 2.5s;"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="glass-effect fixed w-full top-0 z-50 p-4">
+    <div class="container mx-auto flex justify-between items-center">
+      <h1 class="text-3xl font-black gradient-text floating">XMind Space</h1>
+      <nav class="hidden md:flex space-x-8">
+        <a href="#games" class="nav-link hover:text-purple-300 transition-all duration-300 font-medium">Games</a>
+        <a href="#about" class="nav-link hover:text-purple-300 transition-all duration-300 font-medium">About</a>
+        <a href="#contact" class="nav-link hover:text-purple-300 transition-all duration-300 font-medium">Contact</a>
+      </nav>
+      <!-- Mobile menu button -->
+      <button class="md:hidden text-white">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero-bg min-h-screen flex items-center justify-center text-center px-4 pt-20">
+    <div class="max-w-4xl mx-auto">
+      <h2 class="text-5xl md:text-7xl font-black mb-6 leading-tight">
+        Welcome to <span class="gradient-text">XMind Space</span>
+      </h2>
+      <p class="text-xl md:text-2xl text-gray-300 mb-8 font-light max-w-2xl mx-auto leading-relaxed">
+        Immerse yourself in the coolest 2D games online. Fast, free, and absolutely addictive!
+      </p>
+      <a href="#games" class="cta-button inline-block px-10 py-4 text-white rounded-full font-semibold text-lg transition-all duration-300 hover:scale-105 pulse-glow">
+        Start Playing Now
+      </a>
+      
+      <!-- Floating elements -->
+      <div class="mt-16 flex justify-center space-x-8">
+        <div class="floating w-16 h-16 glass-effect rounded-full flex items-center justify-center" style="animation-delay: 0s;">
+          <span class="text-2xl">🎮</span>
+        </div>
+        <div class="floating w-16 h-16 glass-effect rounded-full flex items-center justify-center" style="animation-delay: 1s;">
+          <span class="text-2xl">⚡</span>
+        </div>
+        <div class="floating w-16 h-16 glass-effect rounded-full flex items-center justify-center" style="animation-delay: 2s;">
+          <span class="text-2xl">🚀</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- Games Section -->
+  <section id="games" class="py-20 px-4">
+    <div class="container mx-auto">
+      <div class="text-center mb-16">
+        <h3 class="text-5xl font-black gradient-text mb-4">🔥 Epic Games Collection</h3>
+        <p class="text-xl text-gray-300 font-light">Hand-picked adventures that will blow your mind</p>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <!-- Game 1 -->
+        <div class="game-card p-6 rounded-2xl transition-all duration-500 glow-hover">
+          <div class="relative overflow-hidden rounded-xl mb-6">
+            <img src="photos/p.png" alt="Game 1" class="w-full h-48 object-cover transition-transform duration-500 hover:scale-110">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+          </div>
+          <h4 class="text-2xl font-bold mb-3 text-white">Pixel Raiders</h4>
+          <p class="text-gray-300 mb-6 leading-relaxed">Embark on an epic pixel adventure filled with treasures, enemies, and endless excitement.</p>
+          <a href="mygames/index2.html" class="inline-flex items-center space-x-2 text-purple-400 hover:text-purple-300 font-semibold transition-all duration-300 group">
+            <span>Play Now</span>
+            <svg class="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+            </svg>
+          </a>
+        </div>
+
+        <!-- Game 2 -->
+        <div class="game-card p-6 rounded-2xl transition-all duration-500 glow-hover">
+          <div class="relative overflow-hidden rounded-xl mb-6">
+            <img src="photos/n.png" alt="Game 2" class="w-full h-48 object-cover transition-transform duration-500 hover:scale-110">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+          </div>
+          <h4 class="text-2xl font-bold mb-3 text-white">Neon Dash</h4>
+          <p class="text-gray-300 mb-6 leading-relaxed">Race through neon-lit landscapes in this high-speed platformer that tests your reflexes.</p>
+          <a href="mygames/index1.html" class="inline-flex items-center space-x-2 text-purple-400 hover:text-purple-300 font-semibold transition-all duration-300 group">
+            <span>Play Now</span>
+            <svg class="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+            </svg>
+          </a>
+        </div>
+
+        <!-- Coming Soon Placeholder -->
+        <div class="game-card p-6 rounded-2xl transition-all duration-500 glow-hover opacity-60">
+          <div class="w-full h-48 bg-gradient-to-br from-gray-600 to-gray-800 rounded-xl mb-6 flex items-center justify-center">
+            <span class="text-4xl">🚀</span>
+          </div>
+          <h4 class="text-2xl font-bold mb-3 text-white">More Games Coming</h4>
+          <p class="text-gray-300 mb-6 leading-relaxed">Stay tuned for more incredible gaming experiences coming your way soon!</p>
+          <span class="text-gray-500 font-semibold">Coming Soon...</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- About Section -->
+  <section id="about" class="py-20 px-4">
+    <div class="container mx-auto text-center max-w-4xl">
+      <h3 class="text-5xl font-black gradient-text mb-8">About XMind Space</h3>
+      <div class="glass-effect p-8 rounded-3xl">
+        <p class="text-xl text-gray-300 leading-relaxed mb-6">
+          XMind Space is your ultimate destination for cutting-edge 2D browser games. We craft each experience with passion, creativity, and pure JavaScript magic.
+        </p>
+        <p class="text-lg text-gray-400 leading-relaxed">
+          Our mission is simple: create games that captivate, challenge, and inspire. Dive into worlds where pixels come alive and adventures never end!
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- Contact Section -->
+  <section id="contact" class="py-20 px-4">
+    <div class="container mx-auto text-center max-w-4xl">
+      <h3 class="text-5xl font-black gradient-text mb-8">Let's Connect</h3>
+      <div class="glass-effect p-8 rounded-3xl">
+        <p class="text-xl text-gray-300 mb-6">
+          Ready to collaborate or have an awesome game idea? We'd love to hear from you!
+        </p>
+        <a href="mailto:hello@xmindspace.com" class="cta-button inline-block px-8 py-3 text-white rounded-full font-semibold text-lg transition-all duration-300 hover:scale-105">
+          hello@xmindspace.com
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="glass-effect mt-20 text-center py-6">
+    <p class="text-gray-400 font-light">© 2025 XMind Space. Crafted with ❤️ for gamers worldwide.</p>
+  </footer>
+
+  <script>
+    // Smooth scrolling for navigation links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }
+      });
+    });
+
+    // Add parallax effect to background
+    window.addEventListener('scroll', () => {
+      const scrolled = window.pageYOffset;
+      const parallax = document.querySelector('.parallax-stars');
+      const speed = scrolled * 0.5;
+      parallax.style.transform = `translateY(${speed}px)`;
+    });
+
+    // Add entrance animations
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, observerOptions);
+
+    // Observe game cards for animation
+    document.querySelectorAll('.game-card').forEach(card => {
+      card.style.opacity = '0';
+      card.style.transform = 'translateY(50px)';
+      card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+      observer.observe(card);
+    });
+  </script>
+</body>
+
+</html>

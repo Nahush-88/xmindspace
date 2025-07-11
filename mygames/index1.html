@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Neon Dash</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.70.0/phaser.min.js"></script>
@@ -19,6 +19,7 @@
             padding: 20px;
             color: #0ff;
             text-shadow: 0 0 10px #0ff;
+            z-index: 10;
         }
         #score-display {
             top: 20px;
@@ -28,6 +29,53 @@
             bottom: 20px;
             right: 20px;
         }
+        /* --- START: MOBILE CONTROLS CSS --- */
+        #mobile-controls {
+            position: fixed;
+            bottom: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            box-sizing: border-box;
+            z-index: 20;
+            -webkit-user-select: none; /* Safari */
+            -ms-user-select: none; /* IE 10+ */
+            user-select: none;
+        }
+        .mobile-btn {
+            background: rgba(0, 255, 255, 0.2);
+            border: 2px solid #0ff;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            color: #0ff;
+            font-size: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-shadow: 0 0 10px #0ff;
+            touch-action: manipulation;
+        }
+        .mobile-btn:active {
+            background: rgba(0, 255, 255, 0.5);
+        }
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+        }
+        @media (min-width: 768px) {
+            #mobile-controls {
+                display: none;
+            }
+        }
+        @media (max-width: 767px) {
+            #controls-display {
+                display: none;
+            }
+        }
+        /* --- END: MOBILE CONTROLS CSS --- */
     </style>
 </head>
 <body>
@@ -41,6 +89,19 @@
         SHIFT : Dash
     </div>
     <div id="game"></div>
+
+    <!-- --- START: MOBILE CONTROLS HTML --- -->
+    <div id="mobile-controls">
+        <div class="action-buttons">
+            <div id="btn-left" class="mobile-btn">◀</div>
+            <div id="btn-right" class="mobile-btn">▶</div>
+        </div>
+        <div class="action-buttons">
+            <div id="btn-dash" class="mobile-btn">⚡</div>
+            <div id="btn-jump" class="mobile-btn">▲</div>
+        </div>
+    </div>
+    <!-- --- END: MOBILE CONTROLS HTML --- -->
 
     <script>
         const config = {
@@ -74,30 +135,31 @@
             coins: null
         };
 
+        // --- START: MOBILE CONTROLS STATE ---
+        const mobileControls = {
+            left: false,
+            right: false,
+            jump: false,
+            dash: false
+        };
+        // --- END: MOBILE CONTROLS STATE ---
+
         const game = new Phaser.Game(config);
 
         function preload() {
-            // Generate game assets
+            // ... (your existing preload function)
             const graphics = this.add.graphics();
-            
-            // Player
             graphics.fillStyle(0x00ffff);
             graphics.fillRect(0, 0, 32, 32);
             graphics.generateTexture('player', 32, 32);
-            
-            // Platform
             graphics.clear();
             graphics.fillStyle(0x0088ff);
             graphics.fillRect(0, 0, 100, 20);
             graphics.generateTexture('platform', 100, 20);
-            
-            // Obstacle
             graphics.clear();
             graphics.fillStyle(0xff0066);
             graphics.fillRect(0, 0, 30, 30);
             graphics.generateTexture('obstacle', 30, 30);
-            
-            // Coin
             graphics.clear();
             graphics.fillStyle(0xffff00);
             graphics.fillCircle(10, 10, 10);
@@ -105,146 +167,97 @@
         }
 
         function create() {
-            // Create player
             this.player = this.physics.add.sprite(100, 100, 'player');
             this.player.setCollideWorldBounds(true);
-
-            // Create platforms group
             gameState.platforms = this.physics.add.staticGroup();
             createPlatforms.call(this);
-
-            // Create obstacles and coins groups
             gameState.obstacles = this.physics.add.group();
             gameState.coins = this.physics.add.group();
-
-            // Setup collisions
             this.physics.add.collider(this.player, gameState.platforms);
             this.physics.add.overlap(this.player, gameState.obstacles, hitObstacle, null, this);
             this.physics.add.overlap(this.player, gameState.coins, collectCoin, null, this);
-
-            // Controls
             this.cursors = this.input.keyboard.createCursorKeys();
             this.shiftKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
+            this.time.addEvent({ delay: 2000, callback: spawnObstacles, callbackScope: this, loop: true });
+            this.time.addEvent({ delay: 1000, callback: spawnCoins, callbackScope: this, loop: true });
 
-            // Start spawning
-            this.time.addEvent({
-                delay: 2000,
-                callback: spawnObstacles,
-                callbackScope: this,
-                loop: true
-            });
+            // --- START: MOBILE CONTROLS SETUP ---
+            const btnLeft = document.getElementById('btn-left');
+            const btnRight = document.getElementById('btn-right');
+            const btnJump = document.getElementById('btn-jump');
+            const btnDash = document.getElementById('btn-dash');
 
-            this.time.addEvent({
-                delay: 1000,
-                callback: spawnCoins,
-                callbackScope: this,
-                loop: true
-            });
+            const setupBtn = (btn, action) => {
+                btn.addEventListener('touchstart', (e) => { e.preventDefault(); mobileControls[action] = true; });
+                btn.addEventListener('touchend', (e) => { e.preventDefault(); mobileControls[action] = false; });
+                btn.addEventListener('touchcancel', (e) => { e.preventDefault(); mobileControls[action] = false; });
+            };
+            
+            setupBtn(btnLeft, 'left');
+            setupBtn(btnRight, 'right');
+            setupBtn(btnJump, 'jump');
+            setupBtn(btnDash, 'dash');
+            // --- END: MOBILE CONTROLS SETUP ---
         }
 
         function update() {
-            // Player movement
-            if (this.cursors.left.isDown) {
+            // Player movement (UPDATED for mobile)
+            if (this.cursors.left.isDown || mobileControls.left) {
                 this.player.setVelocityX(-gameState.speed);
-            } else if (this.cursors.right.isDown) {
+            } else if (this.cursors.right.isDown || mobileControls.right) {
                 this.player.setVelocityX(gameState.speed);
             } else {
                 this.player.setVelocityX(0);
             }
 
-            // Jumping
-            if (this.cursors.space.isDown && this.player.body.touching.down) {
+            // Jumping (UPDATED for mobile)
+            if ((this.cursors.space.isDown || mobileControls.jump) && this.player.body.touching.down) {
                 this.player.setVelocityY(-400);
+                mobileControls.jump = false; // Prevent continuous jump on hold
             }
 
-            // Dashing
-            if (this.shiftKey.isDown && gameState.canDash) {
+            // Dashing (UPDATED for mobile)
+            if ((this.shiftKey.isDown || mobileControls.dash) && gameState.canDash) {
                 dash.call(this);
             }
 
-            // Move objects
+            // --- The rest of your update function is unchanged ---
             gameState.obstacles.children.iterate(function(obstacle) {
                 if (obstacle) {
                     obstacle.y += 3;
-                    if (obstacle.y > config.height) {
-                        obstacle.destroy();
-                    }
+                    if (obstacle.y > config.height) obstacle.destroy();
                 }
             });
-
             gameState.coins.children.iterate(function(coin) {
                 if (coin) {
                     coin.y += 2;
-                    if (coin.y > config.height) {
-                        coin.destroy();
-                    }
+                    if (coin.y > config.height) coin.destroy();
                 }
             });
-
-            // Update score display
             document.getElementById('score').textContent = gameState.score;
             document.getElementById('lives').textContent = gameState.lives;
         }
 
         function createPlatforms() {
-            // Create main platform
+            gameState.platforms.clear(true, true); // Clear old platforms on resize
             gameState.platforms.create(config.width/2, config.height-20, 'platform')
-                .setScale(config.width/100, 1)
+                .setScale(config.width/100 + 0.1, 1) // Ensure it covers the whole width
                 .refreshBody();
         }
 
-        function spawnObstacles() {
-            const x = Phaser.Math.Between(0, config.width);
-            const obstacle = gameState.obstacles.create(x, 0, 'obstacle');
-            obstacle.setTint(0xff0066);
-        }
-
-        function spawnCoins() {
-            const x = Phaser.Math.Between(0, config.width);
-            const coin = gameState.coins.create(x, 0, 'coin');
-            coin.setTint(0xffff00);
-        }
-
-        function hitObstacle() {
-            if (gameState.isDashing) return;
-            
-            gameState.lives--;
-            if (gameState.lives <= 0) {
-                this.scene.restart();
-                gameState.score = 0;
-                gameState.lives = 3;
-            }
-        }
-
-        function collectCoin(player, coin) {
-            coin.destroy();
-            gameState.score += 10;
-        }
-
-        function dash() {
-            if (!gameState.canDash) return;
-            
-            gameState.isDashing = true;
-            gameState.canDash = false;
-            
-            // Dash effect
-            this.player.setTint(0xff00ff);
-            
-            // Reset after dash
-            this.time.delayedCall(200, () => {
-                gameState.isDashing = false;
-                this.player.setTint(0x00ffff);
-            });
-            
-            // Dash cooldown
-            this.time.delayedCall(1000, () => {
-                gameState.canDash = true;
-            });
-        }
-
-        // Handle window resize
+        // ... (rest of your functions: spawnObstacles, spawnCoins, hitObstacle, collectCoin, dash)
+        function spawnObstacles(){ const x=Phaser.Math.Between(0,config.width);const obstacle=gameState.obstacles.create(x,0,'obstacle');obstacle.setTint(0xff0066); }
+        function spawnCoins(){ const x=Phaser.Math.Between(0,config.width);const coin=gameState.coins.create(x,0,'coin');coin.setTint(0xffff00); }
+        function hitObstacle(){ if(gameState.isDashing)return;gameState.lives--;if(gameState.lives<=0){this.scene.restart();gameState.score=0;gameState.lives=3;} }
+        function collectCoin(player,coin){ coin.destroy();gameState.score+=10; }
+        function dash(){ if(!gameState.canDash)return;gameState.isDashing=true;gameState.canDash=false;this.player.setTint(0xff00ff);this.time.delayedCall(200,()=>{gameState.isDashing=false;this.player.setTint(0x00ffff);});this.time.delayedCall(1000,()=>{gameState.canDash=true;}); }
+        
         window.addEventListener('resize', () => {
             game.scale.resize(window.innerWidth, window.innerHeight);
+            // Re-center player if they go out of bounds on resize
+            if(game.scene.scenes[0] && game.scene.scenes[0].player) {
+                game.scene.scenes[0].player.x = Phaser.Math.Clamp(game.scene.scenes[0].player.x, 0, window.innerWidth);
+            }
             createPlatforms.call(game.scene.scenes[0]);
         });
     </script>

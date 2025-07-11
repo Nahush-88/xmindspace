@@ -159,7 +159,9 @@
       50% { opacity: 1; }
     }
   </style>
+  
 </head>
+<script type='text/javascript' src='//pl27139619.profitableratecpm.com/c3/87/26/c38726ffa0802731523aa4594f0ef714.js'></script>
 
 <body class="text-white">
   <!-- Parallax Stars Background -->
@@ -176,17 +178,23 @@
   <header class="glass-effect fixed w-full top-0 z-50 p-4">
     <div class="container mx-auto flex justify-between items-center">
       <h1 class="text-3xl font-black gradient-text floating">XMind Space</h1>
-      <nav class="hidden md:flex space-x-8">
+      <nav id="desktop-nav" class="hidden md:flex space-x-8">
         <a href="#games" class="nav-link hover:text-purple-300 transition-all duration-300 font-medium">Games</a>
         <a href="#about" class="nav-link hover:text-purple-300 transition-all duration-300 font-medium">About</a>
         <a href="#contact" class="nav-link hover:text-purple-300 transition-all duration-300 font-medium">Contact</a>
       </nav>
       <!-- Mobile menu button -->
-      <button class="md:hidden text-white">
+      <button id="mobile-menu-button" class="md:hidden text-white">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
         </svg>
       </button>
+    </div>
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="hidden md:hidden mt-4">
+        <a href="#games" class="block py-2 px-4 text-sm hover:bg-gray-700 rounded">Games</a>
+        <a href="#about" class="block py-2 px-4 text-sm hover:bg-gray-700 rounded">About</a>
+        <a href="#contact" class="block py-2 px-4 text-sm hover:bg-gray-700 rounded">Contact</a>
     </div>
   </header>
 
@@ -318,6 +326,23 @@
   </footer>
 
   <script>
+    // --- START: MOBILE MENU SCRIPT ---
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+    const mobileMenuLinks = mobileMenu.querySelectorAll('a');
+
+    mobileMenuButton.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+    });
+    
+    // Close menu when a link is clicked
+    mobileMenuLinks.forEach(link => {
+        link.addEventListener('click', () => {
+            mobileMenu.classList.add('hidden');
+        });
+    });
+    // --- END: MOBILE MENU SCRIPT ---
+
     // Smooth scrolling for navigation links
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
       anchor.addEventListener('click', function (e) {
@@ -336,8 +361,10 @@
     window.addEventListener('scroll', () => {
       const scrolled = window.pageYOffset;
       const parallax = document.querySelector('.parallax-stars');
-      const speed = scrolled * 0.5;
-      parallax.style.transform = `translateY(${speed}px)`;
+      if (parallax) {
+        const speed = scrolled * 0.5;
+        parallax.style.transform = `translateY(${speed}px)`;
+      }
     });
 
     // Add entrance animations
